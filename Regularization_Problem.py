@@ -131,3 +131,32 @@ plt.show()
 
 print("Valores de Theta Regularizados por Lasso - lambda="+str(lamda)+"\n")
 print(resLasso.x)
+
+#-------------------------------Lambda optimo Ridge
+
+lambda_candidates = [10.0**i for i in np.arange(-10,11,1)]
+lambda_candidates = np.array(lambda_candidates)
+
+RSS_ridge = [0 for i in range(len(lambda_candidates))]
+RSS_ridge = np.array(RSS_ridge)
+
+def ridge_regularization(lambda_i):
+    return sum((y - np.dot(resRidge.x[0:-1],X) - resRidge.x[-1])**2) + lambda_i*sum(resRidge.x**2)
+
+for i in range(len(lambda_candidates)):
+  RSS_ridge[-(i+1)] = ridge_regularization(lambda_candidates[i])
+
+print("Lambda Optimo para Ridge: "+str(lambda_candidates[-(np.argmin(RSS_ridge)+1)]))
+
+#-------------------------------Lambda optimo Lasso
+
+RSS_lasso = [0 for i in range(len(lambda_candidates))]
+RSS_lasso = np.array(RSS_ridge)
+
+def lasso_regularization(lambda_i):
+    return sum((y - np.dot(resLasso.x[0:-1],X) - resLasso.x[-1])**2) + lambda_i*sum(abs(resLasso.x))
+
+for i in range(len(lambda_candidates)):
+  RSS_ridge[-(i+1)] = lasso_regularization(lambda_candidates[i])
+
+print("Lambda Optimo para Lasso: "+str(lambda_candidates[-(np.argmin(RSS_lasso)+1)]))

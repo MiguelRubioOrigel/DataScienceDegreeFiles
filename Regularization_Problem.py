@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import minimize
+from sklearn.model_selection import KFold
 
 np.random.seed(100)
 
@@ -13,7 +14,7 @@ m = 5
 b = 2
 mu = 0
 sigma = 3
-lamda = 200
+lamda = 100
 
 x = np.arange(0,11,1)
 X = [x, x**2, x**3, x**4, x**5, x**6]
@@ -101,7 +102,7 @@ print(resHc.x)
 #-------------------------------Regularizacion Ridge
 
 def ridge_function(Theta):
-    return sum((y - np.dot(Theta[0:-1],X) - Theta[-1])**2) + lamda*sum(Theta**2)
+    return sum((y - np.dot(Theta[0:-1],X[0:6]) - Theta[-1])**2) + lamda*sum(Theta**2)
 
 resRidge = minimize(ridge_function, theta[0:7], method='BFGS')
 
@@ -136,27 +137,32 @@ print(resLasso.x)
 
 lambda_candidates = [10.0**i for i in np.arange(-10,11,1)]
 lambda_candidates = np.array(lambda_candidates)
+resRidge = [0 for i in range(9)]
 
-RSS_ridge = [0 for i in range(len(lambda_candidates))]
-RSS_ridge = np.array(RSS_ridge)
-
-def ridge_regularization(lambda_i):
-    return sum((y - np.dot(resRidge.x[0:-1],X) - resRidge.x[-1])**2) + lambda_i*sum(resRidge.x**2)
+def ridge_function_CV(Theta):
+  return sum((y - np.dot(Theta[0:-1],X_train) - Theta[-1])**2) + lamda*sum(Theta**2)
 
 for i in range(len(lambda_candidates)):
-  RSS_ridge[-(i+1)] = ridge_regularization(lambda_candidates[i])
+  lamda = lambda_candidates[i]
+  for k in range(2,3,1):
+    print("k="+str(k))
+    kf = KFold(n_splits=k)
+    for train_index, test_index in kf.split(x):
+      #print (train_index, test_index)
+      x_train, x_test = x[train_index], x[test_index]
+      y_train, y_test = y[train_index], y[test_index]
 
-print("Lambda Optimo para Ridge: "+str(lambda_candidates[-(np.argmin(RSS_ridge)+1)]))
+    print(x_train)
+    X_train = [x_train, x_train**2, x_train**3, x_train**4, x_train**5, x_train**6]
+    X_test  = [x_test,  x_test**2,  x_test**3,  x_test**4,  x_test**5,  x_test**6]
 
-#-------------------------------Lambda optimo Lasso
+    #resRidge[k-2] = minimize(ridge_function_CV, theta[0:7], method='BFGS')
+    if   k==2: resRidge[k-2] = minimize(ridge_function_CV, theta[0:6], method='BFGS')
+    #elif k==3: resRidge[k-2] = minimize(ridge_function_CV, theta[0:6], method='BFGS')
+    else:      resRidge[k-2] = minimize(ridge_function_CV, theta[0:7], method='BFGS')
+    #print(resRidge[k-2])
+    #ypredRidge_CV = np.dot(resRidge[k-2].x[0:-1],X_test) + resRidge[k-2].x[-1]
+    #SSR[k-2] = sum((ypredRidge_CV-y_test)**2)    
+  #SSR_lamda[i] = (1/9)*sum(SSR)
 
-RSS_lasso = [0 for i in range(len(lambda_candidates))]
-RSS_lasso = np.array(RSS_ridge)
-
-def lasso_regularization(lambda_i):
-    return sum((y - np.dot(resLasso.x[0:-1],X) - resLasso.x[-1])**2) + lambda_i*sum(abs(resLasso.x))
-
-for i in range(len(lambda_candidates)):
-  RSS_ridge[-(i+1)] = lasso_regularization(lambda_candidates[i])
-
-print("Lambda Optimo para Lasso: "+str(lambda_candidates[-(np.argmin(RSS_lasso)+1)]))
+#lamda_optimo = lambda_candidates[np.argmin(SSR_lamda)]

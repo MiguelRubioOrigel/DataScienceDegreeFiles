@@ -1,2 +1,2 @@
 # ConvexOptimization
-Convex Optimization course exercises
+Data Science course exercises and tests
